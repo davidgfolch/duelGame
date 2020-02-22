@@ -1,8 +1,13 @@
 package me.guillaume.duel;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Player<T> {
+
+    public static final int ATTACK = 1;
+    public static final int REST = 0;
 
     private final Class<T> claz;
 
@@ -10,8 +15,10 @@ public class Player<T> {
     private String weapon;
     private int hands;
     private int damage;
+    private int attacksRestsPosition = 0;
+    private int[] attacksRestsCadence;
 
-    private Equip equip;
+    private List<Equip> equip = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     public Player(int hitPoints, String weapon, int hands, int damage) {
@@ -23,14 +30,39 @@ public class Player<T> {
         this.damage = damage;
     }
 
+    public Player(int hitPoints, String weapon, int hands, int damage, int[] attacksRestsCadence) {
+        this(hitPoints, weapon, hands, damage);
+        this.attacksRestsCadence = attacksRestsCadence;
+    }
+
     public void engage(Player<?> enemy) {
         blow(enemy);
     }
 
     private void blow(Player<?> enemy) {
-        if (enemy.equip==null || enemy.equip.isValidBlow(this))
-            enemy.hitPoints(Math.max(enemy.hitPoints - damage, 0));
-        if (enemy.hitPoints>0) enemy.blow(this);
+        if (canAttack() && isValidBlow(enemy)) {
+            enemy.hitPoints(Math.max(enemy.hitPoints - getBlowDamage(enemy), 0));
+        }
+        if (enemy.hitPoints > 0) {
+            enemy.blow(this);
+        }
+    }
+
+    private int getBlowDamage(Player<?> enemy) {
+        int damageVariation = equip.stream().mapToInt(Equip::damageVariationDelivered).sum();
+        int enemyDefenseVariation = enemy.equip.stream().mapToInt(Equip::damageVariationReceived).sum();
+        return damage + damageVariation + enemyDefenseVariation; //todo what if resultDamage is less than 0 ?? (not specified in test)
+    }
+
+    private boolean isValidBlow(Player<?> enemy) {
+        return enemy.equip.stream().allMatch(e->e.isValidBlow(this));
+    }
+
+    private boolean canAttack() {
+        if (attacksRestsCadence == null)
+            return true;
+        if (attacksRestsPosition>attacksRestsCadence.length-1) attacksRestsPosition=0;
+        return attacksRestsCadence[attacksRestsPosition++] == ATTACK;
     }
 
     public int hitPoints() {
@@ -42,15 +74,16 @@ public class Player<T> {
     }
 
     public T equip(String equip) {
-        this.equip=new Equip(equip);
+        this.equip.add(new Equip(equip));
         return claz.cast(this);
     }
 
-    public Equip equip() {
+    public List<Equip> equip() {
         return equip;
     }
 
     public String weapon() {
         return weapon;
     }
+
 }
