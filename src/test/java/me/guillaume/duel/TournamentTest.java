@@ -77,28 +77,28 @@ public class TournamentTest {
 
     }
 
-//    /**
-//     * a vicious Swordsman is a Swordsman that put poison on his weapon.
-//     * poison add 20 damages on two first blows
-//     * a veteran Highlander goes Berserk once his hit points are under 30% of his initial total
-//     * once Berserk, he doubles his damages.
-//     */
-//    @Test
+    /**
+     * a vicious Swordsman is a Swordsman that put poison on his weapon.
+     * poison add 20 damages on two first blows
+     * a veteran Highlander goes Berserk once his hit points are under 30% of his initial total
+     * once Berserk, he doubles his damages.
+     */
+    @Test
 //    @Ignore // bonus points when all the rest is neat and tidy
-//    public void ViciousSwordsmanVsVeteranHighlander() {
-//
-//        Swordsman swordsman = new Swordsman("Vicious")
-//                .equip("axe")
-//                .equip("buckler") // obviously equipping an axe and a buckler remove the sword (standard human have usually only 2 arms)
-//                .equip("armor");
-//
-//        Highlander highlander = new Highlander("Veteran");
-//
-//        swordsman.engage(highlander);
-//
-//        assertThat(swordsman.hitPoints()).isEqualTo(1);
-//        assertThat(highlander.hitPoints()).isEqualTo(0);
-//
-//    }
+    public void ViciousSwordsmanVsVeteranHighlander() {
+
+        Swordsman swordsman = new Swordsman("Vicious")
+                .equip("axe")
+                .equip("buckler") // obviously equipping an axe and a buckler remove the sword (standard human have usually only 2 arms)
+                .equip("armor");
+
+        Highlander highlander = new Highlander("Veteran");
+
+        swordsman.engage(highlander);
+
+        assertThat(swordsman.hitPoints()).isEqualTo(1);
+        assertThat(highlander.hitPoints()).isEqualTo(0);
+
+    }
 
 }
