@@ -1,5 +1,7 @@
 package me.guillaume.duel;
 
+import me.guillaume.duel.equip.Equip;
+
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,6 @@ public class Player<T> {
 
     private int hitPointsInitial;
     private int hitPoints;
-    private int hands=2;
 
     private List<Equip> equip = new ArrayList<>();
 
@@ -19,7 +20,6 @@ public class Player<T> {
     public Player(int hitPoints, String weapon) {
         ParameterizedType type = (ParameterizedType) this.getClass().getGenericSuperclass();
         claz = (Class<T>) type.getActualTypeArguments()[0];
-        System.out.println("Creating player: "+ claz.getSimpleName());
         this.hitPoints = hitPoints;
         this.hitPointsInitial = hitPoints;
         this.equip(weapon);
@@ -30,23 +30,19 @@ public class Player<T> {
     }
 
     private void blow(Player<?> enemy) {
-        System.out.println(claz.getSimpleName()+" blows "+enemy.claz.getSimpleName());
         if (canAttack() && isValidBlow(enemy)) {
             enemy.hitPoints(Math.max(enemy.hitPoints - getBlowDamage(enemy), 0));
         }
         if (enemy.hitPoints > 0) {
-            System.out.println(enemy.claz.getSimpleName()+" "+enemy.hitPoints+"/"+enemy.hitPointsInitial+" hitPoints");
             enemy.blow(this);
-        } else System.out.println(enemy.claz.getSimpleName()+" is death!");
+        }
     }
 
     private int getBlowDamage(Player<?> enemy) {
-        final int damage = equip.stream().mapToInt(e -> e.totalDamage(this)).sum();
+        final int damage = equip.stream().mapToInt(Equip::totalDamage).sum();
         final int damagePercentageAdded = equip.stream().mapToInt(e -> e.totalDamagePercentage(damage,this)).sum();
         final int enemyDefenseVariation = enemy.equip.stream().mapToInt(Equip::damageVariationReceived).sum();
-        final int totalDamage = (damagePercentageAdded==0?damage:damagePercentageAdded) + enemyDefenseVariation; //todo what if totalDamage is less than 0 ?? (not specified in test)
-        System.out.println("Total damage: "+ totalDamage + " (Damage: "+damage+" Damage(with%): "+damagePercentageAdded+" Enemy defense: "+enemyDefenseVariation+")");
-        return totalDamage;
+        return (damagePercentageAdded==0?damage:damagePercentageAdded) + enemyDefenseVariation;
     }
 
     private boolean isValidBlow(Player<?> enemy) {
@@ -57,9 +53,7 @@ public class Player<T> {
         List<Equip> equipsWithCadence = equip.stream().filter(e -> e.attacksRestsCadence() != null).collect(Collectors.toList());
         if (equipsWithCadence.isEmpty())
             return true;
-        boolean can = equipsWithCadence.stream().allMatch(Equip::canAttack);
-        if (!can) System.out.println("Can't attack");
-        return can;
+        return equipsWithCadence.stream().allMatch(Equip::canAttack);
     }
 
     public int hitPointsInitial() {
@@ -75,8 +69,7 @@ public class Player<T> {
     }
 
     public T equip(String equip) {
-        System.out.println("Equip adding: "+equip);
-        this.equip.add(new Equip(equip));
+        this.equip.add(Equip.equip(equip));
         checkEquipAndHands();
         return claz.cast(this);
     }
@@ -84,12 +77,11 @@ public class Player<T> {
     private void checkEquipAndHands() {
         List<Equip> equipsUsingHands = equip.stream().filter(e -> e.handsUsed() > 0).collect(Collectors.toList());
         if (!equipsUsingHands.isEmpty()) {
-            while (equipsUsingHands.stream().mapToInt(Equip::handsUsed).sum()>hands) {
-                System.out.println("Removing equip: "+ equipsUsingHands.get(0).getName());
+            int hands = 2;
+            while (equipsUsingHands.stream().mapToInt(Equip::handsUsed).sum()> hands) {
                 equip.remove(equipsUsingHands.get(0));
                 equipsUsingHands.remove(0);
             }
-            equip.forEach(e->System.out.println(e.getName()));
         }
     }
 
